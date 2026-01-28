@@ -189,6 +189,119 @@ function updateOnlineStatus(isOnline) {
 
 // ==================== 生理期功能 ====================
 
+// SVG图标定义
+const statusIcons = {
+    // 经期中 - 卫生巾图标
+    period: `
+        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="periodGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:#ff69b4;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#ff1493;stop-opacity:1" />
+                </linearGradient>
+            </defs>
+            <!-- 卫生巾外形 -->
+            <ellipse cx="100" cy="100" rx="60" ry="80" fill="url(#periodGradient)" opacity="0.9"/>
+            <ellipse cx="100" cy="100" rx="50" ry="70" fill="white" opacity="0.3"/>
+            <!-- 装饰线条 -->
+            <path d="M 70 60 Q 100 80 130 60" stroke="white" stroke-width="3" fill="none" opacity="0.5"/>
+            <path d="M 70 100 Q 100 120 130 100" stroke="white" stroke-width="3" fill="none" opacity="0.5"/>
+            <path d="M 70 140 Q 100 160 130 140" stroke="white" stroke-width="3" fill="none" opacity="0.5"/>
+        </svg>
+    `,
+    
+    // 安全期 - 情侣亲密图标
+    safe: `
+        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="safeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+                </linearGradient>
+            </defs>
+            <!-- 爱心背景 -->
+            <path d="M100,170 C30,120 20,80 40,60 C55,45 75,45 100,65 C125,45 145,45 160,60 C180,80 170,120 100,170 Z" 
+                  fill="url(#safeGradient)" opacity="0.3"/>
+            <!-- 男性图标（左侧） -->
+            <circle cx="75" cy="85" r="15" fill="#4a90e2"/>
+            <path d="M 75 100 L 75 135 M 60 115 L 90 115 M 65 135 L 75 145 M 75 135 L 85 145" 
+                  stroke="#4a90e2" stroke-width="4" stroke-linecap="round"/>
+            <!-- 女性图标（右侧） -->
+            <circle cx="125" cy="85" r="15" fill="#ff69b4"/>
+            <path d="M 125 100 L 125 135 M 110 115 L 140 115 M 115 135 L 125 145 M 125 135 L 135 145" 
+                  stroke="#ff69b4" stroke-width="4" stroke-linecap="round"/>
+            <!-- 连接的心 -->
+            <path d="M 85 90 Q 100 80 115 90" stroke="#ff1493" stroke-width="3" fill="none"/>
+            <circle cx="100" cy="95" r="5" fill="#ff1493"/>
+        </svg>
+    `,
+    
+    // 排卵期 - 卵子图标
+    ovulation: `
+        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <radialGradient id="ovulationGradient">
+                    <stop offset="0%" style="stop-color:#fbbf24;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:1" />
+                </radialGradient>
+            </defs>
+            <!-- 卵子主体 -->
+            <circle cx="100" cy="100" r="45" fill="url(#ovulationGradient)" opacity="0.9"/>
+            <circle cx="100" cy="100" r="35" fill="#fff" opacity="0.3"/>
+            <!-- 细胞核 -->
+            <circle cx="100" cy="100" r="20" fill="#f59e0b" opacity="0.6"/>
+            <!-- 光晕效果 -->
+            <circle cx="100" cy="100" r="55" fill="none" stroke="#fbbf24" stroke-width="2" opacity="0.4"/>
+            <circle cx="100" cy="100" r="65" fill="none" stroke="#fbbf24" stroke-width="1" opacity="0.2"/>
+            <!-- 装饰星星 -->
+            <path d="M 100 50 L 103 60 L 113 60 L 105 67 L 108 77 L 100 70 L 92 77 L 95 67 L 87 60 L 97 60 Z" 
+                  fill="#fbbf24" opacity="0.6"/>
+        </svg>
+    `,
+    
+    // 即将来临 - 警告图标
+    premenstrual: `
+        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="preGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:#ef4444;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#dc2626;stop-opacity:1" />
+                </linearGradient>
+            </defs>
+            <!-- 警告三角形 -->
+            <path d="M 100 30 L 170 150 L 30 150 Z" fill="url(#preGradient)" opacity="0.9"/>
+            <path d="M 100 40 L 160 145 L 40 145 Z" fill="#fff" opacity="0.2"/>
+            <!-- 感叹号 -->
+            <rect x="95" y="70" width="10" height="45" rx="5" fill="white"/>
+            <circle cx="100" cy="130" r="7" fill="white"/>
+            <!-- 脉冲圆环 -->
+            <circle cx="100" cy="100" r="75" fill="none" stroke="#ef4444" stroke-width="2" opacity="0.3">
+                <animate attributeName="r" from="75" to="85" dur="1.5s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" from="0.3" to="0" dur="1.5s" repeatCount="indefinite"/>
+            </circle>
+        </svg>
+    `,
+    
+    // 未知状态 - 问号图标
+    unknown: `
+        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="unknownGradient">
+                    <stop offset="0%" style="stop-color:#9ca3af;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#6b7280;stop-opacity:1" />
+                </linearGradient>
+            </defs>
+            <!-- 圆形背景 -->
+            <circle cx="100" cy="100" r="60" fill="url(#unknownGradient)" opacity="0.8"/>
+            <circle cx="100" cy="100" r="50" fill="white" opacity="0.2"/>
+            <!-- 问号 -->
+            <path d="M 85 75 Q 85 60 100 60 Q 115 60 115 75 Q 115 85 100 90 L 100 105" 
+                  stroke="white" stroke-width="8" fill="none" stroke-linecap="round"/>
+            <circle cx="100" cy="125" r="6" fill="white"/>
+        </svg>
+    `
+};
+
 function loadPeriodData() {
     const periodRef = db.ref(`couples/${coupleId}/period`);
     
@@ -211,33 +324,38 @@ function updatePeriodStatus() {
     // 状态配置
     const statusConfig = {
         period: {
-            icon: '🌸',
+            icon: 'period',
             title: '经期中',
             color: '#ff69b4',
+            bgGradient: 'linear-gradient(135deg, rgba(255, 105, 180, 0.3), rgba(255, 20, 147, 0.3))',
             tips: ['注意保暖', '多喝热水', '避免剧烈运动', '充足休息']
         },
         safe: {
-            icon: '💚',
+            icon: 'safe',
             title: '安全期',
             color: '#10b981',
+            bgGradient: 'linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(5, 150, 105, 0.3))',
             tips: ['保持健康生活', '适度运动', '均衡饮食']
         },
         ovulation: {
-            icon: '💕',
+            icon: 'ovulation',
             title: '排卵期',
             color: '#f59e0b',
+            bgGradient: 'linear-gradient(135deg, rgba(251, 191, 36, 0.3), rgba(245, 158, 11, 0.3))',
             tips: ['注意身体变化', '保持好心情', '适当运动']
         },
         premenstrual: {
-            icon: '⚠️',
+            icon: 'premenstrual',
             title: '即将来临',
             color: '#ef4444',
+            bgGradient: 'linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.3))',
             tips: ['准备用品', '注意情绪', '避免生冷食物', '保持温暖']
         },
         unknown: {
-            icon: '❓',
+            icon: 'unknown',
             title: '未知状态',
             color: '#9ca3af',
+            bgGradient: 'linear-gradient(135deg, rgba(156, 163, 175, 0.3), rgba(107, 114, 128, 0.3))',
             tips: ['请记录经期开始日期']
         }
     };
@@ -300,12 +418,17 @@ function updatePeriodStatus() {
 
     // 更新UI
     const config = statusConfig[currentStatus];
-    document.getElementById('statusIcon').textContent = config.icon;
+    
+    // 更新SVG图标
+    const iconContainer = document.getElementById('statusIconContainer');
+    iconContainer.innerHTML = statusIcons[config.icon];
+    
     document.getElementById('statusTitle').textContent = config.title;
     document.getElementById('statusText').textContent = statusText;
     document.getElementById('statusDays').textContent = daysText;
     
     const statusCard = document.getElementById('periodStatusCard');
+    statusCard.style.background = config.bgGradient;
     statusCard.style.borderColor = config.color + '80';
 }
 
