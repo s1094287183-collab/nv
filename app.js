@@ -317,7 +317,8 @@ function updatePeriodHistory() {
         return;
     }
 
-    const html = periodData.records.slice().reverse().slice(0, 10).map(record => {
+    const html = periodData.records.slice().reverse().slice(0, 10).map((record, reverseIndex) => {
+        const actualIndex = periodData.records.length - 1 - reverseIndex;
         const startDate = new Date(record.startDate);
         const dateStr = `${startDate.getMonth() + 1}月${startDate.getDate()}日`;
         
@@ -340,11 +341,141 @@ function updatePeriodHistory() {
                     </div>
                 </div>
                 <div class="history-duration">${durationText}</div>
+                <div class="history-actions">
+                    <button class="edit-btn" onclick="editPeriodRecord(${actualIndex})" title="编辑">
+                        ✏️
+                    </button>
+                    <button class="delete-btn" onclick="deletePeriodRecord(${actualIndex})" title="删除">
+                        🗑️
+                    </button>
+                </div>
             </div>
         `;
     }).join('');
 
     historyEl.innerHTML = html;
+}
+
+// 编辑记录相关变量
+let editingRecordIndex = -1;
+
+// 打开编辑弹窗
+function editPeriodRecord(index) {
+    editingRecordIndex = index;
+    const record = periodData.records[index];
+    
+    // 格式化日期为 YYYY-MM-DD
+    const startDate = new Date(record.startDate);
+    const startDateStr = startDate.toISOString().split('T')[0];
+    
+    document.getElementById('editStartDate').value = startDateStr;
+    
+    if (record.endDate) {
+        const endDate = new Date(record.endDate);
+        const endDateStr = endDate.toISOString().split('T')[0];
+        document.getElementById('editEndDate').value = endDateStr;
+    } else {
+        document.getElementById('editEndDate').value = '';
+    }
+    
+    document.getElementById('editPeriodModal').style.display = 'flex';
+}
+
+// 关闭编辑弹窗
+function closeEditPeriod() {
+    document.getElementById('editPeriodModal').style.display = 'none';
+    editingRecordIndex = -1;
+}
+
+// 保存编辑的记录
+function saveEditedPeriod() {
+    const startDateStr = document.getElementById('editStartDate').value;
+    const endDateStr = document.getElementById('editEndDate').value;
+    
+    if (!startDateStr) {
+        alert('请选择开始日期！');
+        return;
+    }
+    
+    // 验证日期
+    const startDate = new Date(startDateStr);
+    startDate.setHours(0, 0, 0, 0);
+    
+    if (endDateStr) {
+        const endDate = new Date(endDateStr);
+        endDate.setHours(0, 0, 0, 0);
+        
+        if (endDate < startDate) {
+            alert('结束日期不能早于开始日期！');
+            return;
+        }
+        
+        // 检查日期跨度是否合理（不超过15天）
+        const daysDiff = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24));
+        if (daysDiff > 15) {
+            if (!confirm(`经期持续${daysDiff + 1}天，确认无误吗？`)) {
+                return;
+            }
+        }
+    }
+    
+    if (confirm('确认保存修改吗？')) {
+        // 更新记录
+        periodData.records[editingRecordIndex] = {
+            startDate: startDate.toISOString(),
+            endDate: endDateStr ? new Date(endDateStr + 'T00:00:00').toISOString() : null
+        };
+        
+        // 如果是最后一条记录且没有结束日期，更新 currentPeriod
+        if (editingRecordIndex === periodData.records.length - 1 && !endDateStr) {
+            periodData.currentPeriod = {
+                startDate: startDate.toISOString(),
+                endDate: null
+            };
+        } else if (editingRecordIndex === periodData.records.length - 1 && periodData.currentPeriod) {
+            // 如果添加了结束日期，清除 currentPeriod
+            periodData.currentPeriod = null;
+        }
+        
+        savePeriodData().then(() => {
+            showNotification('✅ 记录已更新');
+            closeEditPeriod();
+        });
+    }
+}
+
+// 删除当前编辑的记录
+function deleteCurrentPeriod() {
+    if (confirm('确定要删除这条记录吗？\n\n删除后无法恢复！')) {
+        // 删除记录
+        periodData.records.splice(editingRecordIndex, 1);
+        
+        // 如果删除的是最后一条，清除 currentPeriod
+        if (editingRecordIndex === periodData.records.length && periodData.currentPeriod) {
+            periodData.currentPeriod = null;
+        }
+        
+        savePeriodData().then(() => {
+            showNotification('✅ 记录已删除');
+            closeEditPeriod();
+        });
+    }
+}
+
+// 直接删除记录（从历史列表）
+function deletePeriodRecord(index) {
+    if (confirm('确定要删除这条记录吗？\n\n删除后无法恢复！')) {
+        periodData.records.splice(index, 1);
+        
+        // 如果删除的是最后一条，清除 currentPeriod
+        if (index === periodData.records.length && periodData.currentPeriod) {
+            periodData.currentPeriod = null;
+        }
+        
+        savePeriodData().then(() => {
+            showNotification('✅ 记录已删除');
+        });
+    }
 }
 
 function updateCareTips() {

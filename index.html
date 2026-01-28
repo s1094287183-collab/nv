@@ -330,6 +330,43 @@
         </div>
     </div>
 
+    <!-- 编辑经期记录弹窗 -->
+    <div id="editPeriodModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>✏️ 编辑记录</h3>
+                <button class="close-btn" onclick="closeEditPeriod()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">开始日期</label>
+                    <input 
+                        type="date" 
+                        id="editStartDate" 
+                        class="date-input"
+                    >
+                </div>
+                <div class="form-group">
+                    <label class="form-label">结束日期</label>
+                    <input 
+                        type="date" 
+                        id="editEndDate" 
+                        class="date-input"
+                    >
+                    <div class="form-note">如果经期还未结束，可以不填结束日期</div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-primary" onclick="saveEditedPeriod()">
+                        💾 保存修改
+                    </button>
+                    <button class="btn btn-danger" onclick="deleteCurrentPeriod()">
+                        🗑️ 删除记录
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>
