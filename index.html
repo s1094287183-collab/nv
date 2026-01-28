@@ -98,11 +98,11 @@
 
                     <!-- 快速操作 -->
                     <div class="quick-actions">
-                        <button class="action-btn primary" onclick="recordPeriodStart()">
+                        <button class="action-btn primary" onclick="showRecordStartModal()">
                             <span class="btn-icon">📅</span>
                             <span class="btn-text">记录经期开始</span>
                         </button>
-                        <button class="action-btn secondary" onclick="recordPeriodEnd()">
+                        <button class="action-btn secondary" onclick="showRecordEndModal()">
                             <span class="btn-icon">✓</span>
                             <span class="btn-text">记录经期结束</span>
                         </button>
@@ -363,6 +363,92 @@
                     </button>
                     <button class="btn btn-danger" onclick="deleteCurrentPeriod()">
                         🗑️ 删除记录
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 记录经期开始弹窗 -->
+    <div id="recordStartModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📅 记录经期开始</h3>
+                <button class="close-btn" onclick="closeRecordStart()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">选择开始日期</label>
+                    <input 
+                        type="date" 
+                        id="recordStartDate" 
+                        class="date-input"
+                    >
+                    <div class="form-note">选择经期开始的日期</div>
+                </div>
+                <div class="quick-date-btns">
+                    <button class="quick-date-btn" onclick="setStartDateToday()">
+                        📅 今天
+                    </button>
+                    <button class="quick-date-btn" onclick="setStartDateYesterday()">
+                        📅 昨天
+                    </button>
+                    <button class="quick-date-btn" onclick="setStartDateDayBefore()">
+                        📅 前天
+                    </button>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-primary" onclick="confirmRecordStart()">
+                        ✅ 确认记录
+                    </button>
+                    <button class="btn btn-secondary" onclick="closeRecordStart()">
+                        ❌ 取消
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 记录经期结束弹窗 -->
+    <div id="recordEndModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>✓ 记录经期结束</h3>
+                <button class="close-btn" onclick="closeRecordEnd()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">选择结束日期</label>
+                    <input 
+                        type="date" 
+                        id="recordEndDate" 
+                        class="date-input"
+                    >
+                    <div class="form-note">选择经期结束的日期</div>
+                </div>
+                <div class="quick-date-btns">
+                    <button class="quick-date-btn" onclick="setEndDateToday()">
+                        📅 今天
+                    </button>
+                    <button class="quick-date-btn" onclick="setEndDateYesterday()">
+                        📅 昨天
+                    </button>
+                    <button class="quick-date-btn" onclick="setEndDateDayBefore()">
+                        📅 前天
+                    </button>
+                </div>
+                <div id="currentPeriodInfo" class="current-period-info" style="display: none;">
+                    <div class="info-icon">ℹ️</div>
+                    <div class="info-text">
+                        当前经期开始日期：<span id="currentStartDate"></span>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-primary" onclick="confirmRecordEnd()">
+                        ✅ 确认记录
+                    </button>
+                    <button class="btn btn-secondary" onclick="closeRecordEnd()">
+                        ❌ 取消
                     </button>
                 </div>
             </div>

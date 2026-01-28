@@ -687,71 +687,199 @@ function updateCareTips() {
     tipsEl.innerHTML = html;
 }
 
-function recordPeriodStart() {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+// ==================== 记录经期开始/结束（手动选择日期）====================
 
+// 显示记录开始弹窗
+function showRecordStartModal() {
     // 检查是否已经在经期中
     if (periodData.currentPeriod && !periodData.currentPeriod.endDate) {
-        alert('当前已经在记录经期中！\n\n如果要重新开始，请先记录上一个经期的结束日期。');
-        return;
+        if (!confirm('当前已经在记录经期中！\n\n是否要重新开始记录？\n（会覆盖当前记录）')) {
+            return;
+        }
     }
 
-    if (confirm('确认记录今天为经期开始日期？')) {
-        const newPeriod = {
-            startDate: today.toISOString(),
-            endDate: null
-        };
-
-        periodData.currentPeriod = newPeriod;
-        
-        savePeriodData().then(() => {
-            showNotification('✅ 已记录经期开始');
-            
-            // 发送互动通知
-            sendInteraction('period-start', '🌸 她的经期开始了');
-        });
-    }
+    // 设置默认日期为今天
+    const today = new Date();
+    const dateStr = today.toISOString().split('T')[0];
+    document.getElementById('recordStartDate').value = dateStr;
+    
+    document.getElementById('recordStartModal').style.display = 'flex';
 }
 
-function recordPeriodEnd() {
-    if (!periodData.currentPeriod || periodData.currentPeriod.endDate) {
-        alert('当前没有正在进行的经期记录！');
+// 关闭记录开始弹窗
+function closeRecordStart() {
+    document.getElementById('recordStartModal').style.display = 'none';
+}
+
+// 快速设置今天
+function setStartDateToday() {
+    const today = new Date();
+    document.getElementById('recordStartDate').value = today.toISOString().split('T')[0];
+}
+
+// 快速设置昨天
+function setStartDateYesterday() {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    document.getElementById('recordStartDate').value = yesterday.toISOString().split('T')[0];
+}
+
+// 快速设置前天
+function setStartDateDayBefore() {
+    const dayBefore = new Date();
+    dayBefore.setDate(dayBefore.getDate() - 2);
+    document.getElementById('recordStartDate').value = dayBefore.toISOString().split('T')[0];
+}
+
+// 确认记录开始
+function confirmRecordStart() {
+    const dateStr = document.getElementById('recordStartDate').value;
+    
+    if (!dateStr) {
+        alert('请选择开始日期！');
         return;
     }
 
+    const startDate = new Date(dateStr + 'T00:00:00');
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
+    // 检查日期是否在未来
+    if (startDate > today) {
+        if (!confirm('您选择的日期是未来的日期，确定吗？')) {
+            return;
+        }
+    }
+    
+    // 检查是否太久以前（超过60天）
+    const daysDiff = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+    if (daysDiff > 60) {
+        if (!confirm(`您选择的日期是${daysDiff}天前，确定吗？`)) {
+            return;
+        }
+    }
+
+    const newPeriod = {
+        startDate: startDate.toISOString(),
+        endDate: null
+    };
+
+    periodData.currentPeriod = newPeriod;
+    
+    savePeriodData().then(() => {
+        const displayDate = `${startDate.getMonth() + 1}月${startDate.getDate()}日`;
+        showNotification(`✅ 已记录经期开始（${displayDate}）`);
+        closeRecordStart();
+        
+        // 发送互动通知
+        sendInteraction('period-start', '🌸 她的经期开始了');
+    });
+}
+
+// 显示记录结束弹窗
+function showRecordEndModal() {
+    if (!periodData.currentPeriod || periodData.currentPeriod.endDate) {
+        alert('当前没有正在进行的经期记录！\n\n请先点击"记录经期开始"');
+        return;
+    }
+
+    // 显示当前开始日期
+    const startDate = new Date(periodData.currentPeriod.startDate);
+    const startDateStr = `${startDate.getMonth() + 1}月${startDate.getDate()}日`;
+    document.getElementById('currentStartDate').textContent = startDateStr;
+    document.getElementById('currentPeriodInfo').style.display = 'flex';
+    
+    // 设置默认日期为今天
+    const today = new Date();
+    const dateStr = today.toISOString().split('T')[0];
+    document.getElementById('recordEndDate').value = dateStr;
+    
+    document.getElementById('recordEndModal').style.display = 'flex';
+}
+
+// 关闭记录结束弹窗
+function closeRecordEnd() {
+    document.getElementById('recordEndModal').style.display = 'none';
+}
+
+// 快速设置结束日期-今天
+function setEndDateToday() {
+    const today = new Date();
+    document.getElementById('recordEndDate').value = today.toISOString().split('T')[0];
+}
+
+// 快速设置结束日期-昨天
+function setEndDateYesterday() {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    document.getElementById('recordEndDate').value = yesterday.toISOString().split('T')[0];
+}
+
+// 快速设置结束日期-前天
+function setEndDateDayBefore() {
+    const dayBefore = new Date();
+    dayBefore.setDate(dayBefore.getDate() - 2);
+    document.getElementById('recordEndDate').value = dayBefore.toISOString().split('T')[0];
+}
+
+// 确认记录结束
+function confirmRecordEnd() {
+    const dateStr = document.getElementById('recordEndDate').value;
+    
+    if (!dateStr) {
+        alert('请选择结束日期！');
+        return;
+    }
+    
+    const endDate = new Date(dateStr + 'T00:00:00');
     const startDate = new Date(periodData.currentPeriod.startDate);
     startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(0, 0, 0, 0);
     
-    if (today < startDate) {
+    // 检查结束日期是否早于开始日期
+    if (endDate < startDate) {
         alert('结束日期不能早于开始日期！');
         return;
     }
-
-    if (confirm('确认记录今天为经期结束日期？')) {
-        periodData.currentPeriod.endDate = today.toISOString();
-        
-        // 添加到历史记录
-        if (!periodData.records) {
-            periodData.records = [];
+    
+    // 检查持续天数是否合理
+    const duration = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+    if (duration > 15) {
+        if (!confirm(`经期持续${duration}天，确认无误吗？`)) {
+            return;
         }
-        periodData.records.push({
-            startDate: periodData.currentPeriod.startDate,
-            endDate: periodData.currentPeriod.endDate
-        });
-
-        periodData.currentPeriod = null;
-
-        savePeriodData().then(() => {
-            showNotification('✅ 已记录经期结束');
-            
-            // 发送互动通知
-            sendInteraction('period-end', '💚 她的经期结束了');
-        });
     }
+    
+    periodData.currentPeriod.endDate = endDate.toISOString();
+    
+    // 添加到历史记录
+    if (!periodData.records) {
+        periodData.records = [];
+    }
+    periodData.records.push({
+        startDate: periodData.currentPeriod.startDate,
+        endDate: periodData.currentPeriod.endDate
+    });
+
+    periodData.currentPeriod = null;
+
+    savePeriodData().then(() => {
+        const displayDate = `${endDate.getMonth() + 1}月${endDate.getDate()}日`;
+        showNotification(`✅ 已记录经期结束（${displayDate}，共${duration}天）`);
+        closeRecordEnd();
+        
+        // 发送互动通知
+        sendInteraction('period-end', '💚 她的经期结束了');
+    });
+}
+
+// 旧的函数保留作为兼容（快速记录今天）
+function recordPeriodStart() {
+    showRecordStartModal();
+}
+
+function recordPeriodEnd() {
+    showRecordEndModal();
 }
 
 function updateCycle(value) {

@@ -912,6 +912,64 @@ body {
     color: white;
 }
 
+/* 快速日期选择按钮 */
+.quick-date-btns {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.quick-date-btn {
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 182, 193, 0.3);
+    border-radius: 12px;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.quick-date-btn:hover {
+    background: rgba(255, 182, 193, 0.2);
+    border-color: rgba(255, 182, 193, 0.5);
+    transform: translateY(-2px);
+}
+
+.quick-date-btn:active {
+    transform: translateY(0);
+}
+
+/* 当前周期信息 */
+.current-period-info {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 12px;
+    padding: 15px;
+    margin: 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.current-period-info .info-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.current-period-info .info-text {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.current-period-info .info-text span {
+    color: #60a5fa;
+    font-weight: 600;
+}
+
 /* 贴心提醒 */
 .care-tips {
     display: flex;
