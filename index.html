@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>我们的小秘密 💑 - 完整版</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    
+    <!-- PeerJS for 视频通话 -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* 玻璃卡片 */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 30px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 头部 */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            background: linear-gradient(45deg, #ff69b4, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .sync-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(16, 185, 129, 0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .sync-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.3); }
+        }
+
+        /* 标签页 */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            flex: 1;
+            min-width: 100px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid transparent;
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+        }
+
+        .tab.active {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 182, 193, 0.5);
+            color: white;
+            font-weight: 600;
+        }
+
+        /* 内容区 */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* 互动按钮网格 */
+        .interaction-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .interaction-btn {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, rgba(255, 182, 193, 0.3), rgba(255, 105, 180, 0.3));
+            border: 2px solid rgba(255, 182, 193, 0.5);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .interaction-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(255, 105, 180, 0.3);
+            background: linear-gradient(135deg, rgba(255, 182, 193, 0.4), rgba(255, 105, 180, 0.4));
+        }
+
+        .interaction-btn .emoji {
+            font-size: 36px;
+        }
+
+        .interaction-btn .label {
+            font-size: 13px;
+            color: white;
+            font-weight: 600;
+        }
+
+        /* 视频通话区域 */
+        .video-container {
+            position: relative;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .video-main {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            background: #000;
+        }
+
+        .video-small {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 150px;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 15px;
+            border: 3px solid white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .video-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+        }
+
+        .video-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .video-btn.call {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .video-btn.hangup {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .video-btn.mute {
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+        }
+
+        .video-btn:hover {
+            transform: scale(1.1);
+        }
+
+        /* 留言输入 */
+        .message-input-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            color: white;
+            font-size: 15px;
+        }
+
+        .message-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .send-btn {
+            padding: 15px 25px;
+            background: linear-gradient(135deg, #ff69b4, #ff1493);
+            border: none;
+            border-radius: 15px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .send-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255, 105, 180, 0.4);
+        }
+
+        /* 消息列表 */
+        .messages-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .message-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 10px;
+        }
+
+        .message-item.mine {
+            background: linear-gradient(135deg, rgba(255, 182, 193, 0.3), rgba(255, 105, 180, 0.3));
+            margin-left: 30px;
+        }
+
+        .message-item.theirs {
+            background: rgba(255, 255, 255, 0.15);
+            margin-right: 30px;
+        }
+
+        .message-sender {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 5px;
+        }
+
+        .message-text {
+            color: white;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 5px;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .empty-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+
+        /* 滚动条 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+        }
+
+        /* 通知弹窗 */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #ff69b4, #ff1493);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* 在线状态 */
+        .online-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(16, 185, 129, 0.2);
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            color: #10b981;
+            margin-top: 10px;
+        }
+
+        .online-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        /* 心跳动画 */
+        .heartbeat {
+            animation: heartbeat 1.5s ease-in-out infinite;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            10%, 30% { transform: scale(0.9); }
+            20%, 40% { transform: scale(1.1); }
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .interaction-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+            }
+
+            .video-main {
+                height: 300px;
+            }
+
+            .video-small {
+                width: 100px;
+                height: 133px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="glass-card">
+            <div class="header">
+                <h1>💑 我们的小秘密 💑</h1>
+                <div class="sync-status">
+                    <div class="sync-dot"></div>
+                    <span>实时同步中</span>
+                </div>
+                <div class="online-status" id="onlineStatus">
+                    <div class="online-dot"></div>
+                    <span>正在检测对方状态...</span>
+                </div>
+            </div>
+
+            <!-- 标签页 -->
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('interactions')">
+                    💕 互动
+                </div>
+                <div class="tab" onclick="switchTab('messages')">
+                    💬 留言
+                </div>
+                <div class="tab" onclick="switchTab('video')">
+                    📹 视频
+                </div>
+                <div class="tab" onclick="switchTab('records')">
+                    📅 记录
+                </div>
+            </div>
+
+            <!-- 互动标签页 -->
+            <div id="interactions" class="tab-content active">
+                <h3 style="color: white; margin-bottom: 20px; font-size: 18px;">💝 情侣互动</h3>
+                
+                <div class="interaction-grid">
+                    <div class="interaction-btn" onclick="sendInteraction('kiss', '💋 飞吻')">
+                        <div class="emoji">💋</div>
+                        <div class="label">飞吻</div>
+                    </div>
+                    <div class="interaction-btn" onclick="sendInteraction('hug', '🤗 抱抱')">
+                        <div class="emoji">🤗</div>
+                        <div class="label">抱抱</div>
+                    </div>
+                    <div class="interaction-btn" onclick="sendInteraction('love', '❤️ 爱你')">
+                        <div class="emoji heartbeat">❤️</div>
+                        <div class="label">爱你</div>
+                    </div>
+                    <div class="interaction-btn" onclick="sendInteraction('miss', '🥺 想你')">
+                        <div class="emoji">🥺</div>
+                        <div class="label">想你</div>
+                    </div>
+                    <div class="interaction-btn" onclick="sendInteraction('rose', '🌹 送花')">
+                        <div class="emoji">🌹</div>
+                        <div class="label">送花</div>
+                    </div>
+                    <div class="interaction-btn" onclick="sendInteraction('gift', '🎁 礼物')">
+                        <div class="emoji">🎁</div>
+                        <div class="label">礼物</div>
+                    </div>
+                    <div class="interaction-btn" onclick="sendInteraction('breakfast', '🍳 做早餐')">
+                        <div class="emoji">🍳</div>
+                        <div class="label">做早餐</div>
+                    </div>
+                    <div class="interaction-btn" onclick="sendInteraction('massage', '💆 按摩')">
+                        <div class="emoji">💆</div>
+                        <div class="label">按摩</div>
+                    </div>
+                    <div class="interaction-btn" onclick="sendInteraction('movie', '🎬 看电影')">
+                        <div class="emoji">🎬</div>
+                        <div class="label">看电影</div>
+                    </div>
+                    <div class="interaction-btn" onclick="sendInteraction('walk', '🚶 散步')">
+                        <div class="emoji">🚶</div>
+                        <div class="label">散步</div>
+                    </div>
+                    <div class="interaction-btn" onclick="sendInteraction('coffee', '☕ 喝咖啡')">
+                        <div class="emoji">☕</div>
+                        <div class="label">喝咖啡</div>
+                    </div>
+                    <div class="interaction-btn" onclick="sendInteraction('sleep', '😴 晚安')">
+                        <div class="emoji">😴</div>
+                        <div class="label">晚安</div>
+                    </div>
+                </div>
+
+                <h3 style="color: white; margin: 30px 0 20px 0; font-size: 18px;">🎯 快速关怀</h3>
+                
+                <div class="interaction-grid">
+                    <div class="interaction-btn" onclick="sendInteraction('water', '💧 多喝水')">
+                        <div class="emoji">💧</div>
+                        <div class="label">多喝水</div>
+                    </div>
+                    <div class="interaction-btn" onclick="sendInteraction('rest', '😌 休息下')">
+                        <div class="emoji">😌</div>
+                        <div class="label">休息下</div>
+                    </div>
+                    <div class="interaction-btn" onclick="sendInteraction('eat', '🍱 记得吃饭')">
+                        <div class="emoji">🍱</div>
+                        <div class="label">吃饭</div>
+                    </div>
+                    <div class="interaction-btn" onclick="sendInteraction('weather', '🌡️ 注意天气')">
+                        <div class="emoji">🌡️</div>
+                        <div class="label">天气</div>
+                    </div>
+                    <div class="interaction-btn" onclick="sendInteraction('safety', '🏠 注意安全')">
+                        <div class="emoji">🏠</div>
+                        <div class="label">安全</div>
+                    </div>
+                    <div class="interaction-btn" onclick="sendInteraction('cheer', '💪 加油')">
+                        <div class="emoji">💪</div>
+                        <div class="label">加油</div>
+                    </div>
+                </div>
+
+                <!-- 最近互动记录 -->
+                <div style="margin-top: 30px;">
+                    <h3 style="color: white; margin-bottom: 15px; font-size: 16px;">📊 最近互动</h3>
+                    <div id="recentInteractions" style="color: rgba(255, 255, 255, 0.7); font-size: 14px;">
+                        暂无互动记录
+                    </div>
+                </div>
+            </div>
+
+            <!-- 留言标签页 -->
+            <div id="messages" class="tab-content">
+                <div class="message-input-container">
+                    <input 
+                        type="text" 
+                        id="messageInput" 
+                        class="message-input" 
+                        placeholder="给ta留个言吧~ 💕"
+                        maxlength="200"
+                    >
+                    <button class="send-btn" onclick="sendMessage()">
+                        发送
+                    </button>
+                </div>
+
+                <div class="messages-list" id="messagesList">
+                    <div class="empty-state">
+                        <div class="empty-icon">💌</div>
+                        <div>还没有留言，快来说点什么吧~</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 视频通话标签页 -->
+            <div id="video" class="tab-content">
+                <div class="video-container" id="videoContainer" style="display: none;">
+                    <video id="remoteVideo" class="video-main" autoplay playsinline></video>
+                    <video id="localVideo" class="video-small" autoplay playsinline muted></video>
+                    
+                    <div class="video-controls">
+                        <button class="video-btn mute" onclick="toggleMute()" title="静音/取消静音">
+                            🎤
+                        </button>
+                        <button class="video-btn hangup" onclick="hangUp()" title="挂断">
+                            📞
+                        </button>
+                    </div>
+                </div>
+
+                <div id="callInterface">
+                    <div style="text-align: center; padding: 30px 20px;">
+                        <div style="font-size: 80px; margin-bottom: 20px;">📹</div>
+                        <div style="color: white; font-size: 18px; margin-bottom: 30px;">
+                            视频通话
+                        </div>
+                        <div style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin-bottom: 25px; line-height: 1.8;">
+                            点击下面的按钮开始视频通话<br>
+                            对方会收到通话请求
+                        </div>
+                        <button class="video-btn call" onclick="startCall()" style="width: 80px; height: 80px; font-size: 30px;">
+                            📞
+                        </button>
+                        <div style="margin-top: 20px; font-size: 13px; color: rgba(255, 255, 255, 0.6);">
+                            提示：需要允许摄像头和麦克风权限
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 记录标签页 -->
+            <div id="records" class="tab-content">
+                <div class="empty-state">
+                    <div class="empty-icon">📅</div>
+                    <div>记录功能开发中...</div>
+                    <div style="font-size: 13px; margin-top: 10px;">
+                        将包含生理期记录、纪念日等功能
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase 配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyAfJlwD2WNyEjWi9P_xtyIJgPd8mkf0fJQ",
+            authDomain: "our-secret-172a7.firebaseapp.com",
+            databaseURL: "https://our-secret-172a7-default-rtdb.firebaseio.com",
+            projectId: "our-secret-172a7",
+            storageBucket: "our-secret-172a7.firebasestorage.app",
+            messagingSenderId: "370805742187",
+            appId: "1:370805742187:web:031b2a39cf42d5dd6d6f2e"
+        };
+
+        // 初始化
+        let db, coupleId, userId;
+        let peer, localStream, remoteStream;
+        let currentCall = null;
+        let isMuted = false;
+
+        // 页面加载
+        window.onload = function() {
+            // 初始化 Firebase
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.database();
+
+            // 获取配置
+            coupleId = localStorage.getItem('coupleId');
+            if (!coupleId) {
+                alert('请先配置专属ID！');
+                window.location.href = 'firebase-sync-test.html';
+                return;
+            }
+
+            // 生成用户ID
+            userId = localStorage.getItem('userId');
+            if (!userId) {
+                userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('userId', userId);
+            }
+
+            // 初始化功能
+            initOnlineStatus();
+            loadMessages();
+            loadInteractions();
+            initVideoCall();
+        };
+
+        // === 标签页切换 ===
+        function switchTab(tabName) {
+            // 移除所有active
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            // 添加active
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        // === 在线状态 ===
+        function initOnlineStatus() {
+            const onlineRef = db.ref(`couples/${coupleId}/online/${userId}`);
+            const partnerRef = db.ref(`couples/${coupleId}/online`);
+
+            // 设置自己在线
+            onlineRef.set({
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                userId: userId
+            });
+
+            // 断线时移除
+            onlineRef.onDisconnect().remove();
+
+            // 监听对方状态
+            partnerRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    const partners = Object.keys(data).filter(id => id !== userId);
+                    if (partners.length > 0) {
+                        updateOnlineStatus(true);
+                    } else {
+                        updateOnlineStatus(false);
+                    }
+                } else {
+                    updateOnlineStatus(false);
+                }
+            });
+
+            // 定期更新
+            setInterval(() => {
+                onlineRef.set({
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    userId: userId
+                });
+            }, 30000);
+        }
+
+        function updateOnlineStatus(isOnline) {
+            const statusEl = document.getElementById('onlineStatus');
+            if (isOnline) {
+                statusEl.innerHTML = '<div class="online-dot"></div><span>Ta在线 ❤️</span>';
+                statusEl.style.background = 'rgba(16, 185, 129, 0.2)';
+                statusEl.style.color = '#10b981';
+            } else {
+                statusEl.innerHTML = '<div class="online-dot" style="background: #999; animation: none;"></div><span>Ta离线</span>';
+                statusEl.style.background = 'rgba(156, 163, 175, 0.2)';
+                statusEl.style.color = '#9ca3af';
+            }
+        }
+
+        // === 互动功能 ===
+        function sendInteraction(type, label) {
+            const interactionRef = db.ref(`couples/${coupleId}/interactions`).push();
+            interactionRef.set({
+                type: type,
+                label: label,
+                from: userId,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => {
+                showNotification(`已发送：${label} 💕`);
+            });
+        }
+
+        function loadInteractions() {
+            const interactionsRef = db.ref(`couples/${coupleId}/interactions`).limitToLast(10);
+            interactionsRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (!data) return;
+
+                const interactions = Object.values(data).reverse();
+                const html = interactions.map(item => {
+                    const time = new Date(item.timestamp).toLocaleTimeString('zh-CN', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    const who = item.from === userId ? '你' : 'Ta';
+                    return `<div style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        ${item.label} · ${who} · ${time}
+                    </div>`;
+                }).join('');
+
+                document.getElementById('recentInteractions').innerHTML = html;
+            });
+        }
+
+        // === 留言功能 ===
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+
+            if (!text) {
+                alert('请输入留言内容');
+                return;
+            }
+
+            const messageRef = db.ref(`couples/${coupleId}/messages`).push();
+            messageRef.set({
+                text: text,
+                from: userId,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => {
+                input.value = '';
+                showNotification('留言已发送 💌');
+            });
+        }
+
+        function loadMessages() {
+            const messagesRef = db.ref(`couples/${coupleId}/messages`).limitToLast(50);
+            messagesRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                const listEl = document.getElementById('messagesList');
+
+                if (!data) {
+                    listEl.innerHTML = '<div class="empty-state"><div class="empty-icon">💌</div><div>还没有留言</div></div>';
+                    return;
+                }
+
+                const messages = Object.values(data);
+                const html = messages.map(msg => {
+                    const isMine = msg.from === userId;
+                    const time = new Date(msg.timestamp).toLocaleString('zh-CN', {
+                        month: 'numeric',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+
+                    return `<div class="message-item ${isMine ? 'mine' : 'theirs'}">
+                        <div class="message-sender">${isMine ? '我' : 'Ta'}</div>
+                        <div class="message-text">${msg.text}</div>
+                        <div class="message-time">${time}</div>
+                    </div>`;
+                }).join('');
+
+                listEl.innerHTML = html;
+                listEl.scrollTop = listEl.scrollHeight;
+            });
+        }
+
+        // === 视频通话功能 ===
+        function initVideoCall() {
+            // 初始化 PeerJS
+            peer = new Peer(userId, {
+                host: 'peerjs-server.herokuapp.com',
+                secure: true,
+                port: 443
+            });
+
+            peer.on('open', (id) => {
+                console.log('PeerJS ID:', id);
+                // 更新自己的 Peer ID
+                db.ref(`couples/${coupleId}/peerIds/${userId}`).set(id);
+            });
+
+            // 接收通话
+            peer.on('call', (call) => {
+                if (confirm('Ta想和你视频通话，接听吗？💕')) {
+                    answerCall(call);
+                } else {
+                    call.close();
+                }
+            });
+
+            peer.on('error', (err) => {
+                console.error('PeerJS Error:', err);
+            });
+        }
+
+        async function startCall() {
+            try {
+                // 获取本地媒体流
+                localStream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                    audio: true
+                });
+
+                document.getElementById('localVideo').srcObject = localStream;
+
+                // 获取对方的 Peer ID
+                const snapshot = await db.ref(`couples/${coupleId}/peerIds`).once('value');
+                const peerIds = snapshot.val();
+                const partnerIds = Object.keys(peerIds).filter(id => id !== userId);
+
+                if (partnerIds.length === 0) {
+                    alert('对方不在线，无法发起通话');
+                    stopLocalStream();
+                    return;
+                }
+
+                const partnerId = peerIds[partnerIds[0]];
+
+                // 发起通话
+                currentCall = peer.call(partnerId, localStream);
+
+                currentCall.on('stream', (remoteStream) => {
+                    document.getElementById('remoteVideo').srcObject = remoteStream;
+                    showVideoUI();
+                    showNotification('通话已接通 📞');
+                });
+
+                currentCall.on('close', () => {
+                    hangUp();
+                });
+
+            } catch (err) {
+                console.error('获取媒体失败:', err);
+                alert('无法访问摄像头/麦克风\n\n请确保已授予权限！');
+            }
+        }
+
+        async function answerCall(call) {
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                    audio: true
+                });
+
+                document.getElementById('localVideo').srcObject = localStream;
+
+                call.answer(localStream);
+                currentCall = call;
+
+                call.on('stream', (remoteStream) => {
+                    document.getElementById('remoteVideo').srcObject = remoteStream;
+                    showVideoUI();
+                    showNotification('通话已接通 📞');
+                });
+
+                call.on('close', () => {
+                    hangUp();
+                });
+
+            } catch (err) {
+                console.error('接听失败:', err);
+                alert('无法访问摄像头/麦克风');
+            }
+        }
+
+        function hangUp() {
+            if (currentCall) {
+                currentCall.close();
+                currentCall = null;
+            }
+
+            stopLocalStream();
+            hideVideoUI();
+            showNotification('通话已结束');
+        }
+
+        function stopLocalStream() {
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+        }
+
+        function toggleMute() {
+            if (localStream) {
+                const audioTrack = localStream.getAudioTracks()[0];
+                audioTrack.enabled = !audioTrack.enabled;
+                isMuted = !audioTrack.enabled;
+
+                const btn = event.target.closest('.video-btn');
+                btn.textContent = isMuted ? '🔇' : '🎤';
+            }
+        }
+
+        function showVideoUI() {
+            document.getElementById('callInterface').style.display = 'none';
+            document.getElementById('videoContainer').style.display = 'block';
+        }
+
+        function hideVideoUI() {
+            document.getElementById('callInterface').style.display = 'block';
+            document.getElementById('videoContainer').style.display = 'none';
+            document.getElementById('localVideo').srcObject = null;
+            document.getElementById('remoteVideo').srcObject = null;
+        }
+
+        // === 通知 ===
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // 输入框回车发送
+        document.addEventListener('DOMContentLoaded', () => {
+            const input = document.getElementById('messageInput');
+            if (input) {
+                input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        sendMessage();
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
