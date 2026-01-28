@@ -210,7 +210,7 @@ const statusIcons = {
         </svg>
     `,
     
-    // 安全期 - 情侣亲密图标
+    // 安全期 - 床上情侣图标（更真实）
     safe: `
         <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -218,21 +218,57 @@ const statusIcons = {
                     <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
                     <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
                 </linearGradient>
+                <linearGradient id="bedGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#6d28d9;stop-opacity:1" />
+                </linearGradient>
             </defs>
-            <!-- 爱心背景 -->
-            <path d="M100,170 C30,120 20,80 40,60 C55,45 75,45 100,65 C125,45 145,45 160,60 C180,80 170,120 100,170 Z" 
-                  fill="url(#safeGradient)" opacity="0.3"/>
-            <!-- 男性图标（左侧） -->
-            <circle cx="75" cy="85" r="15" fill="#4a90e2"/>
-            <path d="M 75 100 L 75 135 M 60 115 L 90 115 M 65 135 L 75 145 M 75 135 L 85 145" 
-                  stroke="#4a90e2" stroke-width="4" stroke-linecap="round"/>
-            <!-- 女性图标（右侧） -->
-            <circle cx="125" cy="85" r="15" fill="#ff69b4"/>
-            <path d="M 125 100 L 125 135 M 110 115 L 140 115 M 115 135 L 125 145 M 125 135 L 135 145" 
-                  stroke="#ff69b4" stroke-width="4" stroke-linecap="round"/>
-            <!-- 连接的心 -->
-            <path d="M 85 90 Q 100 80 115 90" stroke="#ff1493" stroke-width="3" fill="none"/>
-            <circle cx="100" cy="95" r="5" fill="#ff1493"/>
+            
+            <!-- 绿色安全背景光晕 -->
+            <circle cx="100" cy="100" r="85" fill="url(#safeGradient)" opacity="0.2"/>
+            <circle cx="100" cy="100" r="70" fill="url(#safeGradient)" opacity="0.15"/>
+            
+            <!-- 床铺 -->
+            <rect x="30" y="110" width="140" height="50" rx="10" fill="url(#bedGradient)" opacity="0.8"/>
+            <rect x="30" y="105" width="140" height="15" rx="8" fill="#a78bfa" opacity="0.6"/>
+            
+            <!-- 被子/毯子 -->
+            <path d="M 35 120 Q 100 110 165 120 L 165 155 Q 100 165 35 155 Z" 
+                  fill="#c4b5fd" opacity="0.7"/>
+            
+            <!-- 男性（左侧，蓝色） -->
+            <circle cx="70" cy="100" r="18" fill="#3b82f6" opacity="0.9"/>
+            <ellipse cx="70" cy="125" rx="22" ry="15" fill="#3b82f6" opacity="0.8"/>
+            <path d="M 52 125 Q 48 135 52 145" stroke="#2563eb" stroke-width="6" 
+                  fill="none" stroke-linecap="round" opacity="0.8"/>
+            
+            <!-- 女性（右侧，粉色） -->
+            <circle cx="130" cy="100" r="18" fill="#ec4899" opacity="0.9"/>
+            <ellipse cx="130" cy="125" rx="22" ry="15" fill="#ec4899" opacity="0.8"/>
+            <!-- 女性长发 -->
+            <path d="M 115 95 Q 110 105 115 115" stroke="#ec4899" stroke-width="8" 
+                  fill="none" stroke-linecap="round" opacity="0.7"/>
+            <path d="M 145 95 Q 150 105 145 115" stroke="#ec4899" stroke-width="8" 
+                  fill="none" stroke-linecap="round" opacity="0.7"/>
+            
+            <!-- 亲密姿态 - 靠在一起 -->
+            <path d="M 88 110 Q 100 108 112 110" stroke="#fff" stroke-width="3" 
+                  fill="none" opacity="0.6"/>
+            
+            <!-- 爱心符号（顶部） -->
+            <path d="M100,65 C85,50 65,50 55,65 C45,80 55,95 100,120 C145,95 155,80 145,65 C135,50 115,50 100,65 Z" 
+                  fill="#10b981" opacity="0.4"/>
+            
+            <!-- 环境装饰 - 星星 -->
+            <circle cx="40" cy="70" r="3" fill="#fbbf24" opacity="0.7">
+                <animate attributeName="opacity" values="0.7;0.3;0.7" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="160" cy="70" r="3" fill="#fbbf24" opacity="0.7">
+                <animate attributeName="opacity" values="0.3;0.7;0.3" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="100" cy="50" r="3" fill="#fbbf24" opacity="0.7">
+                <animate attributeName="opacity" values="0.5;0.9;0.5" dur="2s" repeatCount="indefinite"/>
+            </circle>
         </svg>
     `,
     
