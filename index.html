@@ -2,9 +2,11 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
     <title>我们的小秘密 💑</title>
     
     <!-- Firebase SDK -->
@@ -73,11 +75,14 @@
                     <div class="tab active" data-tab="period">
                         🌸 生理期
                     </div>
+                    <div class="tab" data-tab="chat">
+                        💬 聊天
+                    </div>
                     <div class="tab" data-tab="interactions">
                         💕 互动
                     </div>
                     <div class="tab" data-tab="messages">
-                        💬 留言
+                        📝 留言
                     </div>
                     <div class="tab" data-tab="video">
                         📹 视频
@@ -145,6 +150,43 @@
                         <h3 class="section-title">💝 贴心提醒</h3>
                         <div class="care-tips" id="careTips">
                             <!-- 动态生成 -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 聊天标签页 -->
+                <div id="chat" class="tab-content">
+                    <!-- 聊天消息区域 -->
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chatMessages">
+                            <div class="empty-state">
+                                <div class="empty-icon">💬</div>
+                                <div>开始聊天吧~</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 输入区域 -->
+                    <div class="chat-input-area">
+                        <div class="chat-input-wrapper">
+                            <textarea 
+                                id="chatInput" 
+                                class="chat-input" 
+                                placeholder="输入消息..."
+                                rows="1"
+                                maxlength="500"
+                            ></textarea>
+                            <button class="chat-send-btn" onclick="sendChatMessage()">
+                                <span class="send-icon">📤</span>
+                            </button>
+                        </div>
+                        <div class="chat-tools">
+                            <button class="tool-btn" onclick="insertEmoji('❤️')">❤️</button>
+                            <button class="tool-btn" onclick="insertEmoji('😘')">😘</button>
+                            <button class="tool-btn" onclick="insertEmoji('🥰')">🥰</button>
+                            <button class="tool-btn" onclick="insertEmoji('😊')">😊</button>
+                            <button class="tool-btn" onclick="insertEmoji('👍')">👍</button>
+                            <button class="tool-btn" onclick="insertEmoji('🌹')">🌹</button>
                         </div>
                     </div>
                 </div>

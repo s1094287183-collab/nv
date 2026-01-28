@@ -51,6 +51,8 @@ window.onload = function() {
     initVideoCall();
     initEventListeners();
     loadPeriodData();
+    loadChatMessages();
+    watchTypingStatus();
 };
 
 // 显示设置界面
@@ -124,6 +126,29 @@ function initEventListeners() {
             if (e.key === 'Enter') {
                 sendMessage();
             }
+        });
+    }
+
+    // 聊天输入框事件
+    const chatInput = document.getElementById('chatInput');
+    if (chatInput) {
+        // 自动调整高度
+        chatInput.addEventListener('input', function() {
+            autoResizeTextarea(this);
+            showTypingIndicator();
+        });
+
+        // Enter发送，Shift+Enter换行
+        chatInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendChatMessage();
+            }
+        });
+
+        // 失去焦点停止输入状态
+        chatInput.addEventListener('blur', function() {
+            stopTyping();
         });
     }
 }
@@ -896,6 +921,176 @@ function savePeriodData() {
         console.error('❌ 保存失败:', error);
         showNotification('保存失败，请重试');
     });
+}
+
+// ==================== 聊天功能 ====================
+
+let isTyping = false;
+let typingTimeout = null;
+
+// 加载聊天消息
+function loadChatMessages() {
+    const chatRef = db.ref(`couples/${coupleId}/chat`).limitToLast(100);
+    chatRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        const messagesEl = document.getElementById('chatMessages');
+
+        if (!data) {
+            messagesEl.innerHTML = '<div class="empty-state"><div class="empty-icon">💬</div><div>开始聊天吧~</div></div>';
+            return;
+        }
+
+        const messages = Object.values(data);
+        const html = messages.map(msg => {
+            const isMine = msg.from === userId;
+            const time = new Date(msg.timestamp).toLocaleTimeString('zh-CN', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            return `
+                <div class="chat-bubble ${isMine ? 'mine' : 'theirs'}">
+                    <div class="chat-text">${escapeHtml(msg.text)}</div>
+                    <div class="chat-time">${time}</div>
+                </div>
+            `;
+        }).join('');
+
+        messagesEl.innerHTML = html;
+        
+        // 滚动到底部
+        setTimeout(() => {
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }, 100);
+    });
+}
+
+// 发送聊天消息
+function sendChatMessage() {
+    const input = document.getElementById('chatInput');
+    const text = input.value.trim();
+
+    if (!text) {
+        return;
+    }
+
+    if (text.length > 500) {
+        alert('消息太长了，请控制在500字以内');
+        return;
+    }
+
+    const chatRef = db.ref(`couples/${coupleId}/chat`).push();
+    chatRef.set({
+        text: text,
+        from: userId,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    }).then(() => {
+        input.value = '';
+        input.style.height = 'auto';
+        
+        // 停止输入状态
+        stopTyping();
+    }).catch((error) => {
+        console.error('发送失败:', error);
+        showNotification('发送失败，请重试');
+    });
+}
+
+// 插入表情
+function insertEmoji(emoji) {
+    const input = document.getElementById('chatInput');
+    const start = input.selectionStart;
+    const end = input.selectionEnd;
+    const text = input.value;
+    
+    input.value = text.substring(0, start) + emoji + text.substring(end);
+    input.focus();
+    
+    // 设置光标位置
+    const newPos = start + emoji.length;
+    input.setSelectionRange(newPos, newPos);
+    
+    // 触发输入事件以调整高度
+    autoResizeTextarea(input);
+}
+
+// 自动调整textarea高度
+function autoResizeTextarea(textarea) {
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+}
+
+// 输入状态管理
+function showTypingIndicator() {
+    if (!isTyping) {
+        isTyping = true;
+        db.ref(`couples/${coupleId}/typing/${userId}`).set(true);
+    }
+    
+    // 清除之前的定时器
+    if (typingTimeout) {
+        clearTimeout(typingTimeout);
+    }
+    
+    // 3秒后自动停止
+    typingTimeout = setTimeout(() => {
+        stopTyping();
+    }, 3000);
+}
+
+function stopTyping() {
+    if (isTyping) {
+        isTyping = false;
+        db.ref(`couples/${coupleId}/typing/${userId}`).remove();
+    }
+    if (typingTimeout) {
+        clearTimeout(typingTimeout);
+        typingTimeout = null;
+    }
+}
+
+// 监听对方输入状态
+function watchTypingStatus() {
+    const typingRef = db.ref(`couples/${coupleId}/typing`);
+    typingRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            const partners = Object.keys(data).filter(id => id !== userId);
+            if (partners.length > 0) {
+                showPartnerTyping();
+            } else {
+                hidePartnerTyping();
+            }
+        } else {
+            hidePartnerTyping();
+        }
+    });
+}
+
+function showPartnerTyping() {
+    const messagesEl = document.getElementById('chatMessages');
+    let indicator = document.getElementById('typingIndicator');
+    
+    if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.id = 'typingIndicator';
+        indicator.className = 'typing-indicator';
+        indicator.innerHTML = `
+            Ta正在输入
+            <span class="typing-dots">
+                <span></span><span></span><span></span>
+            </span>
+        `;
+        messagesEl.appendChild(indicator);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+}
+
+function hidePartnerTyping() {
+    const indicator = document.getElementById('typingIndicator');
+    if (indicator) {
+        indicator.remove();
+    }
 }
 
 // ==================== 互动功能 ====================
