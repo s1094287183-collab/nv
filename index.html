@@ -70,7 +70,10 @@
 
                 <!-- 标签页 -->
                 <div class="tabs">
-                    <div class="tab active" data-tab="interactions">
+                    <div class="tab active" data-tab="period">
+                        🌸 生理期
+                    </div>
+                    <div class="tab" data-tab="interactions">
                         💕 互动
                     </div>
                     <div class="tab" data-tab="messages">
@@ -79,13 +82,73 @@
                     <div class="tab" data-tab="video">
                         📹 视频
                     </div>
-                    <div class="tab" data-tab="records">
-                        📅 记录
+                </div>
+
+                <!-- 生理期标签页 -->
+                <div id="period" class="tab-content active">
+                    <!-- 当前状态卡片 -->
+                    <div class="period-status-card" id="periodStatusCard">
+                        <div class="status-icon" id="statusIcon">🌸</div>
+                        <div class="status-title" id="statusTitle">加载中...</div>
+                        <div class="status-text" id="statusText">正在计算...</div>
+                        <div class="status-days" id="statusDays"></div>
+                    </div>
+
+                    <!-- 快速操作 -->
+                    <div class="quick-actions">
+                        <button class="action-btn primary" onclick="recordPeriodStart()">
+                            <span class="btn-icon">📅</span>
+                            <span class="btn-text">记录经期开始</span>
+                        </button>
+                        <button class="action-btn secondary" onclick="recordPeriodEnd()">
+                            <span class="btn-icon">✓</span>
+                            <span class="btn-text">记录经期结束</span>
+                        </button>
+                    </div>
+
+                    <!-- 周期设置 -->
+                    <div class="cycle-setting">
+                        <div class="setting-label">
+                            <span>平均周期</span>
+                            <span class="setting-value" id="cycleValue">28天</span>
+                        </div>
+                        <input 
+                            type="range" 
+                            id="cycleSlider" 
+                            min="21" 
+                            max="35" 
+                            value="28" 
+                            class="cycle-slider"
+                            oninput="updateCycle(this.value)"
+                        >
+                        <div class="slider-labels">
+                            <span>21天</span>
+                            <span>35天</span>
+                        </div>
+                    </div>
+
+                    <!-- 历史记录 -->
+                    <div class="section">
+                        <h3 class="section-title">📊 历史记录</h3>
+                        <div id="periodHistory" class="history-list">
+                            <div class="empty-state">
+                                <div class="empty-icon">📝</div>
+                                <div>还没有记录，点击上方按钮开始记录</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 贴心提醒 -->
+                    <div class="section">
+                        <h3 class="section-title">💝 贴心提醒</h3>
+                        <div class="care-tips" id="careTips">
+                            <!-- 动态生成 -->
+                        </div>
                     </div>
                 </div>
 
                 <!-- 互动标签页 -->
-                <div id="interactions" class="tab-content active">
+                <div id="interactions" class="tab-content">
                     <h3 class="section-title">💝 情侣互动</h3>
                     
                     <div class="interaction-grid">
@@ -230,17 +293,6 @@
                             <div class="call-note">
                                 提示：需要允许摄像头和麦克风权限
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 记录标签页 -->
-                <div id="records" class="tab-content">
-                    <div class="empty-state">
-                        <div class="empty-icon">📅</div>
-                        <div>记录功能开发中...</div>
-                        <div style="font-size: 13px; margin-top: 10px;">
-                            将包含生理期记录、纪念日等功能
                         </div>
                     </div>
                 </div>

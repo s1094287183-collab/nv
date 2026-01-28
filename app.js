@@ -14,6 +14,11 @@ let db, coupleId, userId;
 let peer, localStream;
 let currentCall = null;
 let isMuted = false;
+let periodData = {
+    records: [],
+    cycle: 28,
+    currentPeriod: null
+};
 
 // ==================== 初始化 ====================
 
@@ -45,6 +50,7 @@ window.onload = function() {
     loadInteractions();
     initVideoCall();
     initEventListeners();
+    loadPeriodData();
 };
 
 // 显示设置界面
@@ -181,6 +187,299 @@ function updateOnlineStatus(isOnline) {
     }
 }
 
+// ==================== 生理期功能 ====================
+
+function loadPeriodData() {
+    const periodRef = db.ref(`couples/${coupleId}/period`);
+    
+    periodRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            periodData = data;
+        }
+        
+        updatePeriodStatus();
+        updatePeriodHistory();
+        updateCareTips();
+    });
+}
+
+function updatePeriodStatus() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // 状态配置
+    const statusConfig = {
+        period: {
+            icon: '🌸',
+            title: '经期中',
+            color: '#ff69b4',
+            tips: ['注意保暖', '多喝热水', '避免剧烈运动', '充足休息']
+        },
+        safe: {
+            icon: '💚',
+            title: '安全期',
+            color: '#10b981',
+            tips: ['保持健康生活', '适度运动', '均衡饮食']
+        },
+        ovulation: {
+            icon: '💕',
+            title: '排卵期',
+            color: '#f59e0b',
+            tips: ['注意身体变化', '保持好心情', '适当运动']
+        },
+        premenstrual: {
+            icon: '⚠️',
+            title: '即将来临',
+            color: '#ef4444',
+            tips: ['准备用品', '注意情绪', '避免生冷食物', '保持温暖']
+        },
+        unknown: {
+            icon: '❓',
+            title: '未知状态',
+            color: '#9ca3af',
+            tips: ['请记录经期开始日期']
+        }
+    };
+
+    let currentStatus = 'unknown';
+    let daysText = '';
+    let statusText = '暂无数据，请记录经期开始时间';
+
+    // 检查是否正在经期
+    if (periodData.currentPeriod && periodData.currentPeriod.startDate) {
+        const startDate = new Date(periodData.currentPeriod.startDate);
+        startDate.setHours(0, 0, 0, 0);
+        const daysSinceStart = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+        
+        if (!periodData.currentPeriod.endDate) {
+            // 正在经期中
+            currentStatus = 'period';
+            const periodDay = daysSinceStart + 1;
+            daysText = `第 ${periodDay} 天`;
+            statusText = '经期进行中，注意休息和保暖';
+        }
+    }
+
+    // 计算下次经期
+    if (periodData.records && periodData.records.length > 0 && currentStatus !== 'period') {
+        const lastRecord = periodData.records[periodData.records.length - 1];
+        const lastStartDate = new Date(lastRecord.startDate);
+        lastStartDate.setHours(0, 0, 0, 0);
+        
+        const cycleLength = periodData.cycle || 28;
+        const nextPeriodDate = new Date(lastStartDate);
+        nextPeriodDate.setDate(nextPeriodDate.getDate() + cycleLength);
+        
+        const daysUntilNext = Math.floor((nextPeriodDate - today) / (1000 * 60 * 60 * 24));
+        const daysSinceLastPeriod = Math.floor((today - lastStartDate) / (1000 * 60 * 60 * 24));
+        
+        if (daysUntilNext <= 0) {
+            // 已经过了预计日期
+            currentStatus = 'premenstrual';
+            daysText = `延迟 ${Math.abs(daysUntilNext)} 天`;
+            statusText = '经期可能即将开始';
+        } else if (daysUntilNext <= 3) {
+            // 即将来临
+            currentStatus = 'premenstrual';
+            daysText = `${daysUntilNext} 天后`;
+            statusText = `预计 ${daysUntilNext} 天后来经期`;
+        } else if (daysSinceLastPeriod >= Math.floor(cycleLength / 2 - 2) && 
+                   daysSinceLastPeriod <= Math.floor(cycleLength / 2 + 2)) {
+            // 排卵期
+            currentStatus = 'ovulation';
+            daysText = `${daysUntilNext} 天后`;
+            statusText = `排卵期，距离下次经期还有 ${daysUntilNext} 天`;
+        } else {
+            // 安全期
+            currentStatus = 'safe';
+            daysText = `${daysUntilNext} 天后`;
+            statusText = `距离下次经期还有 ${daysUntilNext} 天`;
+        }
+    }
+
+    // 更新UI
+    const config = statusConfig[currentStatus];
+    document.getElementById('statusIcon').textContent = config.icon;
+    document.getElementById('statusTitle').textContent = config.title;
+    document.getElementById('statusText').textContent = statusText;
+    document.getElementById('statusDays').textContent = daysText;
+    
+    const statusCard = document.getElementById('periodStatusCard');
+    statusCard.style.borderColor = config.color + '80';
+}
+
+function updatePeriodHistory() {
+    const historyEl = document.getElementById('periodHistory');
+    
+    if (!periodData.records || periodData.records.length === 0) {
+        historyEl.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div><div>还没有记录</div></div>';
+        return;
+    }
+
+    const html = periodData.records.slice().reverse().slice(0, 10).map(record => {
+        const startDate = new Date(record.startDate);
+        const dateStr = `${startDate.getMonth() + 1}月${startDate.getDate()}日`;
+        
+        let durationText = '';
+        if (record.endDate) {
+            const endDate = new Date(record.endDate);
+            const duration = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+            durationText = `${duration}天`;
+        } else {
+            durationText = '进行中';
+        }
+
+        return `
+            <div class="history-item">
+                <div class="history-date">
+                    <div class="history-icon">📅</div>
+                    <div class="history-info">
+                        <div class="history-label">开始日期</div>
+                        <div class="history-value">${dateStr}</div>
+                    </div>
+                </div>
+                <div class="history-duration">${durationText}</div>
+            </div>
+        `;
+    }).join('');
+
+    historyEl.innerHTML = html;
+}
+
+function updateCareTips() {
+    const tipsEl = document.getElementById('careTips');
+    
+    // 根据当前状态生成提醒
+    const tips = [
+        {
+            icon: '💧',
+            title: '多喝温水',
+            text: '每天至少8杯水，促进新陈代谢'
+        },
+        {
+            icon: '🌡️',
+            title: '注意保暖',
+            text: '避免受凉，特别是腹部和脚部'
+        },
+        {
+            icon: '🍎',
+            title: '均衡饮食',
+            text: '多吃新鲜水果蔬菜，避免生冷辛辣'
+        },
+        {
+            icon: '😴',
+            title: '充足睡眠',
+            text: '保证每天7-8小时睡眠，早睡早起'
+        },
+        {
+            icon: '🧘',
+            title: '适度运动',
+            text: '散步、瑜伽等轻度运动，避免剧烈运动'
+        },
+        {
+            icon: '😊',
+            title: '保持心情',
+            text: '放松心情，避免情绪波动和压力'
+        }
+    ];
+
+    const html = tips.map(tip => `
+        <div class="care-tip-item">
+            <div class="tip-icon">${tip.icon}</div>
+            <div class="tip-content">
+                <div class="tip-title">${tip.title}</div>
+                <div class="tip-text">${tip.text}</div>
+            </div>
+        </div>
+    `).join('');
+
+    tipsEl.innerHTML = html;
+}
+
+function recordPeriodStart() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // 检查是否已经在经期中
+    if (periodData.currentPeriod && !periodData.currentPeriod.endDate) {
+        alert('当前已经在记录经期中！\n\n如果要重新开始，请先记录上一个经期的结束日期。');
+        return;
+    }
+
+    if (confirm('确认记录今天为经期开始日期？')) {
+        const newPeriod = {
+            startDate: today.toISOString(),
+            endDate: null
+        };
+
+        periodData.currentPeriod = newPeriod;
+        
+        savePeriodData().then(() => {
+            showNotification('✅ 已记录经期开始');
+            
+            // 发送互动通知
+            sendInteraction('period-start', '🌸 她的经期开始了');
+        });
+    }
+}
+
+function recordPeriodEnd() {
+    if (!periodData.currentPeriod || periodData.currentPeriod.endDate) {
+        alert('当前没有正在进行的经期记录！');
+        return;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const startDate = new Date(periodData.currentPeriod.startDate);
+    startDate.setHours(0, 0, 0, 0);
+    
+    if (today < startDate) {
+        alert('结束日期不能早于开始日期！');
+        return;
+    }
+
+    if (confirm('确认记录今天为经期结束日期？')) {
+        periodData.currentPeriod.endDate = today.toISOString();
+        
+        // 添加到历史记录
+        if (!periodData.records) {
+            periodData.records = [];
+        }
+        periodData.records.push({
+            startDate: periodData.currentPeriod.startDate,
+            endDate: periodData.currentPeriod.endDate
+        });
+
+        periodData.currentPeriod = null;
+
+        savePeriodData().then(() => {
+            showNotification('✅ 已记录经期结束');
+            
+            // 发送互动通知
+            sendInteraction('period-end', '💚 她的经期结束了');
+        });
+    }
+}
+
+function updateCycle(value) {
+    document.getElementById('cycleValue').textContent = value + '天';
+    periodData.cycle = parseInt(value);
+    savePeriodData();
+}
+
+function savePeriodData() {
+    const periodRef = db.ref(`couples/${coupleId}/period`);
+    return periodRef.set(periodData).then(() => {
+        console.log('✅ 生理期数据已保存');
+    }).catch((error) => {
+        console.error('❌ 保存失败:', error);
+        showNotification('保存失败，请重试');
+    });
+}
+
 // ==================== 互动功能 ====================
 
 function sendInteraction(type, label) {
@@ -192,8 +491,6 @@ function sendInteraction(type, label) {
         timestamp: firebase.database.ServerValue.TIMESTAMP
     }).then(() => {
         showNotification(`已发送：${label} 💕`);
-        
-        // 添加动画效果
         createHearts();
     }).catch((error) => {
         console.error('发送失败:', error);
@@ -327,7 +624,6 @@ function escapeHtml(text) {
 
 function initVideoCall() {
     try {
-        // 初始化 PeerJS
         peer = new Peer(userId, {
             config: {
                 iceServers: [
@@ -339,11 +635,9 @@ function initVideoCall() {
 
         peer.on('open', (id) => {
             console.log('PeerJS ID:', id);
-            // 更新自己的 Peer ID
             db.ref(`couples/${coupleId}/peerIds/${userId}`).set(id);
         });
 
-        // 接收通话
         peer.on('call', (call) => {
             if (confirm('Ta想和你视频通话，接听吗？💕')) {
                 answerCall(call);
@@ -362,7 +656,6 @@ function initVideoCall() {
 
 async function startCall() {
     try {
-        // 获取本地媒体流
         localStream = await navigator.mediaDevices.getUserMedia({
             video: true,
             audio: true
@@ -370,7 +663,6 @@ async function startCall() {
 
         document.getElementById('localVideo').srcObject = localStream;
 
-        // 获取对方的 Peer ID
         const snapshot = await db.ref(`couples/${coupleId}/peerIds`).once('value');
         const peerIds = snapshot.val();
         
@@ -389,8 +681,6 @@ async function startCall() {
         }
 
         const partnerId = peerIds[partnerIds[0]];
-
-        // 发起通话
         currentCall = peer.call(partnerId, localStream);
 
         currentCall.on('stream', (remoteStream) => {
@@ -418,7 +708,6 @@ async function answerCall(call) {
         });
 
         document.getElementById('localVideo').srcObject = localStream;
-
         call.answer(localStream);
         currentCall = call;
 
@@ -443,7 +732,6 @@ function hangUp() {
         currentCall.close();
         currentCall = null;
     }
-
     stopLocalStream();
     hideVideoUI();
     showNotification('通话已结束');
@@ -462,7 +750,6 @@ function toggleMute() {
         if (audioTrack) {
             audioTrack.enabled = !audioTrack.enabled;
             isMuted = !audioTrack.enabled;
-
             const btn = event.target.closest('.video-btn');
             btn.textContent = isMuted ? '🔇' : '🎤';
         }

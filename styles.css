@@ -605,6 +605,249 @@ body {
     border-radius: 10px;
 }
 
+/* ==================== 生理期功能样式 ==================== */
+
+/* 状态卡片 */
+.period-status-card {
+    background: linear-gradient(135deg, rgba(255, 182, 193, 0.3), rgba(255, 105, 180, 0.3));
+    border: 2px solid rgba(255, 182, 193, 0.5);
+    border-radius: 25px;
+    padding: 30px;
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.status-icon {
+    font-size: 80px;
+    margin-bottom: 15px;
+    animation: pulse 2s infinite;
+}
+
+.status-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 10px;
+}
+
+.status-text {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 15px;
+    line-height: 1.6;
+}
+
+.status-days {
+    font-size: 36px;
+    font-weight: 700;
+    color: #ffd700;
+    text-shadow: 0 2px 10px rgba(255, 215, 0, 0.3);
+}
+
+/* 快速操作按钮 */
+.quick-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.action-btn {
+    padding: 20px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.action-btn.primary {
+    background: linear-gradient(135deg, #ff69b4, #ff1493);
+    color: white;
+}
+
+.action-btn.secondary {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.action-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(255, 105, 180, 0.4);
+}
+
+.btn-icon {
+    font-size: 32px;
+}
+
+.btn-text {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+/* 周期设置 */
+.cycle-setting {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 25px;
+}
+
+.setting-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+    font-size: 16px;
+    margin-bottom: 15px;
+}
+
+.setting-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ffd700;
+}
+
+.cycle-slider {
+    width: 100%;
+    height: 8px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.2);
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.cycle-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff69b4, #ff1493);
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(255, 105, 180, 0.5);
+}
+
+.cycle-slider::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff69b4, #ff1493);
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 10px rgba(255, 105, 180, 0.5);
+}
+
+.slider-labels {
+    display: flex;
+    justify-content: space-between;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+    margin-top: 8px;
+}
+
+/* 历史记录 */
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.history-item {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s;
+}
+
+.history-item:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.history-date {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.history-icon {
+    font-size: 24px;
+}
+
+.history-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.history-label {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.history-value {
+    font-size: 16px;
+    color: white;
+    font-weight: 600;
+}
+
+.history-duration {
+    font-size: 14px;
+    color: #ffd700;
+    font-weight: 600;
+}
+
+/* 贴心提醒 */
+.care-tips {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.care-tip-item {
+    background: linear-gradient(135deg, rgba(255, 182, 193, 0.2), rgba(255, 105, 180, 0.2));
+    border: 1px solid rgba(255, 182, 193, 0.3);
+    border-radius: 15px;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.tip-icon {
+    font-size: 28px;
+    flex-shrink: 0;
+}
+
+.tip-content {
+    flex: 1;
+}
+
+.tip-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 4px;
+}
+
+.tip-text {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.5;
+}
+
+/* Section */
+.section {
+    margin-top: 30px;
+}
+
 /* 响应式 */
 @media (max-width: 768px) {
     .container {
@@ -636,5 +879,21 @@ body {
     .tab {
         padding: 10px;
         font-size: 13px;
+    }
+
+    .quick-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .status-icon {
+        font-size: 60px;
+    }
+
+    .status-title {
+        font-size: 20px;
+    }
+
+    .status-days {
+        font-size: 28px;
     }
 }
