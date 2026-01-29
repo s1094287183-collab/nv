@@ -16,7 +16,7 @@ let currentCall = null;
 let isMuted = false;
 let periodData = {
     records: [],
-    cycle: 28,
+    cycle: 30, // 默认周期30天（一个月）
     currentPeriod: null
 };
 
@@ -459,10 +459,10 @@ function updatePeriodStatus() {
             daysText = `延迟 ${Math.abs(daysUntilNext)} 天`;
             statusText = '经期可能即将开始';
         } else if (daysUntilNext <= 3) {
-            // 即将来临
+            // 提前3天提醒
             currentStatus = 'premenstrual';
             daysText = `${daysUntilNext} 天后`;
-            statusText = `预计 ${daysUntilNext} 天后来经期`;
+            statusText = `⚠️ 提醒：预计 ${daysUntilNext} 天后来经期`;
         } else if (daysSinceLastPeriod >= Math.floor(cycleLength / 2 - 2) && 
                    daysSinceLastPeriod <= Math.floor(cycleLength / 2 + 2)) {
             // 排卵期
@@ -594,10 +594,10 @@ function saveEditedPeriod() {
             return;
         }
         
-        // 检查日期跨度是否合理（不超过15天）
+        // 检查日期跨度是否合理（正常约8天）
         const daysDiff = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24));
-        if (daysDiff > 15) {
-            if (!confirm(`经期持续${daysDiff + 1}天，确认无误吗？`)) {
+        if (daysDiff > 8) {
+            if (!confirm(`经期持续${daysDiff + 1}天，确认无误吗？\n（正常持续时间约为8天）`)) {
                 return;
             }
         }
@@ -867,10 +867,10 @@ function confirmRecordEnd() {
         return;
     }
     
-    // 检查持续天数是否合理
+    // 检查持续天数是否合理（正常为8天左右）
     const duration = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
-    if (duration > 15) {
-        if (!confirm(`经期持续${duration}天，确认无误吗？`)) {
+    if (duration > 8) {
+        if (!confirm(`经期持续${duration}天，确认无误吗？\n（正常持续时间约为8天）`)) {
             return;
         }
     }
