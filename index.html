@@ -2,11 +2,14 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="format-detection" content="telephone=no">
+    <meta name="theme-color" content="#ff69b4">
+    <meta name="screen-orientation" content="portrait">
     <title>我们的小秘密 💑</title>
     
     <!-- Firebase SDK -->
@@ -17,6 +20,36 @@
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     
     <link rel="stylesheet" href="styles.css">
+    
+    <!-- 安卓兼容性脚本 -->
+    <script>
+        // 检测并修复安卓兼容性问题
+        (function() {
+            // 禁用双击缩放
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function(event) {
+                const now = Date.now();
+                if (now - lastTouchEnd <= 300) {
+                    event.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, false);
+            
+            // 阻止默认的触摸缩放
+            document.addEventListener('gesturestart', function(e) {
+                e.preventDefault();
+            });
+            
+            // 安卓浏览器viewport修复
+            if (navigator.userAgent.match(/Android/i)) {
+                window.addEventListener('load', function() {
+                    setTimeout(function() {
+                        window.scrollTo(0, 1);
+                    }, 100);
+                });
+            }
+        })();
+    </script>
 </head>
 <body>
     <!-- 首次设置界面 -->

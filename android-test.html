@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>安卓兼容性测试</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .test-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .test-card h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .test-result {
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        button:active {
+            background: #5568d3;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-card">
+        <h2>🔍 系统信息检测</h2>
+        <div id="systemInfo" class="test-result info">检测中...</div>
+    </div>
+
+    <div class="test-card">
+        <h2>📱 浏览器信息</h2>
+        <div id="browserInfo" class="test-result info">检测中...</div>
+    </div>
+
+    <div class="test-card">
+        <h2>🌐 网络连接测试</h2>
+        <button onclick="testNetwork()">测试网络</button>
+        <div id="networkResult" class="test-result info" style="margin-top: 10px;">点击按钮开始测试</div>
+    </div>
+
+    <div class="test-card">
+        <h2>🔥 Firebase连接测试</h2>
+        <button onclick="testFirebase()">测试Firebase</button>
+        <div id="firebaseResult" class="test-result info" style="margin-top: 10px;">点击按钮开始测试</div>
+    </div>
+
+    <div class="test-card">
+        <h2>📺 视频/音频权限测试</h2>
+        <button onclick="testMedia()">测试媒体权限</button>
+        <div id="mediaResult" class="test-result info" style="margin-top: 10px;">点击按钮开始测试</div>
+    </div>
+
+    <div class="test-card">
+        <h2>💾 本地存储测试</h2>
+        <button onclick="testStorage()">测试存储</button>
+        <div id="storageResult" class="test-result info" style="margin-top: 10px;">点击按钮开始测试</div>
+    </div>
+
+    <div class="test-card">
+        <h2>🎨 CSS功能测试</h2>
+        <button onclick="testCSS()">测试CSS</button>
+        <div id="cssResult" class="test-result info" style="margin-top: 10px;">点击按钮开始测试</div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    <script>
+        // 系统信息检测
+        function detectSystem() {
+            const ua = navigator.userAgent;
+            let info = '<strong>User Agent:</strong><br>' + ua + '<br><br>';
+            
+            info += '<strong>平台:</strong> ' + navigator.platform + '<br>';
+            info += '<strong>语言:</strong> ' + navigator.language + '<br>';
+            info += '<strong>在线状态:</strong> ' + (navigator.onLine ? '✅ 在线' : '❌ 离线') + '<br>';
+            info += '<strong>Cookie启用:</strong> ' + (navigator.cookieEnabled ? '✅ 是' : '❌ 否') + '<br>';
+            info += '<strong>屏幕分辨率:</strong> ' + screen.width + 'x' + screen.height + '<br>';
+            info += '<strong>可用分辨率:</strong> ' + screen.availWidth + 'x' + screen.availHeight + '<br>';
+            info += '<strong>窗口大小:</strong> ' + window.innerWidth + 'x' + window.innerHeight + '<br>';
+            
+            // 检测是否是安卓
+            if (/Android/i.test(ua)) {
+                const match = ua.match(/Android\s([0-9\.]*)/);
+                info += '<br><strong>✅ 检测到安卓系统</strong><br>';
+                if (match) {
+                    info += '<strong>安卓版本:</strong> ' + match[1] + '<br>';
+                }
+            } else {
+                info += '<br><strong>⚠️ 非安卓系统</strong><br>';
+            }
+            
+            // 检测浏览器
+            if (/Chrome/i.test(ua) && !/Edge/i.test(ua)) {
+                info += '<strong>浏览器:</strong> Chrome<br>';
+            } else if (/Firefox/i.test(ua)) {
+                info += '<strong>浏览器:</strong> Firefox<br>';
+            } else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) {
+                info += '<strong>浏览器:</strong> Safari<br>';
+            } else if (/Edge/i.test(ua)) {
+                info += '<strong>浏览器:</strong> Edge<br>';
+            } else {
+                info += '<strong>浏览器:</strong> 其他<br>';
+            }
+            
+            document.getElementById('systemInfo').innerHTML = info;
+        }
+
+        // 浏览器功能检测
+        function detectBrowser() {
+            let info = '';
+            
+            info += '<strong>JavaScript:</strong> ' + (typeof window !== 'undefined' ? '✅ 支持' : '❌ 不支持') + '<br>';
+            info += '<strong>LocalStorage:</strong> ' + (typeof Storage !== 'undefined' ? '✅ 支持' : '❌ 不支持') + '<br>';
+            info += '<strong>IndexedDB:</strong> ' + (window.indexedDB ? '✅ 支持' : '❌ 不支持') + '<br>';
+            info += '<strong>WebRTC:</strong> ' + (navigator.mediaDevices ? '✅ 支持' : '❌ 不支持') + '<br>';
+            info += '<strong>Geolocation:</strong> ' + (navigator.geolocation ? '✅ 支持' : '❌ 不支持') + '<br>';
+            info += '<strong>Touch Events:</strong> ' + ('ontouchstart' in window ? '✅ 支持' : '❌ 不支持') + '<br>';
+            info += '<strong>Service Worker:</strong> ' + ('serviceWorker' in navigator ? '✅ 支持' : '❌ 不支持') + '<br>';
+            
+            document.getElementById('browserInfo').innerHTML = info;
+        }
+
+        // 网络测试
+        function testNetwork() {
+            const result = document.getElementById('networkResult');
+            result.className = 'test-result info';
+            result.innerHTML = '测试中...';
+            
+            fetch('https://www.google.com/favicon.ico', { mode: 'no-cors' })
+                .then(() => {
+                    result.className = 'test-result success';
+                    result.innerHTML = '✅ 网络连接正常<br>可以访问外部资源';
+                })
+                .catch(err => {
+                    result.className = 'test-result error';
+                    result.innerHTML = '❌ 网络连接失败<br>错误: ' + err.message + '<br><br>可能原因:<br>1. 没有网络连接<br>2. 防火墙限制<br>3. DNS问题';
+                });
+        }
+
+        // Firebase测试
+        function testFirebase() {
+            const result = document.getElementById('firebaseResult');
+            result.className = 'test-result info';
+            result.innerHTML = '测试中...';
+            
+            try {
+                // Firebase配置
+                const firebaseConfig = {
+                    apiKey: "AIzaSyDpXMf8v-hH_EhWqYa0rQK3nK0K0yLZ9nY",
+                    authDomain: "our-secret-172a7.firebaseapp.com",
+                    databaseURL: "https://our-secret-172a7-default-rtdb.firebaseio.com",
+                    projectId: "our-secret-172a7",
+                    storageBucket: "our-secret-172a7.firebasestorage.app",
+                    messagingSenderId: "635240049857",
+                    appId: "1:635240049857:web:4c8e8f8a8e8f8a8e8f8a8e"
+                };
+                
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                
+                const db = firebase.database();
+                const testRef = db.ref('test/connection');
+                
+                testRef.set({
+                    timestamp: Date.now(),
+                    test: 'Android compatibility test'
+                }).then(() => {
+                    result.className = 'test-result success';
+                    result.innerHTML = '✅ Firebase连接成功<br>数据库可以正常读写';
+                }).catch(err => {
+                    result.className = 'test-result error';
+                    result.innerHTML = '❌ Firebase连接失败<br>错误: ' + err.message;
+                });
+            } catch (err) {
+                result.className = 'test-result error';
+                result.innerHTML = '❌ Firebase初始化失败<br>错误: ' + err.message + '<br><br>可能原因:<br>1. Firebase SDK加载失败<br>2. 网络问题<br>3. 配置错误';
+            }
+        }
+
+        // 媒体权限测试
+        function testMedia() {
+            const result = document.getElementById('mediaResult');
+            result.className = 'test-result info';
+            result.innerHTML = '测试中...';
+            
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                result.className = 'test-result error';
+                result.innerHTML = '❌ 浏览器不支持媒体设备访问<br><br>解决方案:<br>1. 使用Chrome浏览器<br>2. 确保是HTTPS连接<br>3. 更新浏览器到最新版本';
+                return;
+            }
+            
+            navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+                .then(stream => {
+                    // 立即关闭流
+                    stream.getTracks().forEach(track => track.stop());
+                    
+                    result.className = 'test-result success';
+                    result.innerHTML = '✅ 媒体权限正常<br>摄像头和麦克风可以访问';
+                })
+                .catch(err => {
+                    result.className = 'test-result error';
+                    result.innerHTML = '❌ 媒体权限被拒绝<br>错误: ' + err.name + '<br><br>解决方案:<br>1. 在浏览器设置中允许摄像头/麦克风权限<br>2. 确保网站使用HTTPS<br>3. 检查系统权限设置';
+                });
+        }
+
+        // 存储测试
+        function testStorage() {
+            const result = document.getElementById('storageResult');
+            result.className = 'test-result info';
+            result.innerHTML = '测试中...';
+            
+            try {
+                // 测试localStorage
+                localStorage.setItem('test', 'value');
+                const value = localStorage.getItem('test');
+                localStorage.removeItem('test');
+                
+                if (value === 'value') {
+                    result.className = 'test-result success';
+                    result.innerHTML = '✅ 本地存储正常<br>LocalStorage可以正常使用';
+                } else {
+                    throw new Error('LocalStorage读写不一致');
+                }
+            } catch (err) {
+                result.className = 'test-result error';
+                result.innerHTML = '❌ 本地存储失败<br>错误: ' + err.message + '<br><br>可能原因:<br>1. 浏览器隐私模式<br>2. 存储空间已满<br>3. 浏览器设置禁用';
+            }
+        }
+
+        // CSS功能测试
+        function testCSS() {
+            const result = document.getElementById('cssResult');
+            result.className = 'test-result info';
+            result.innerHTML = '测试中...';
+            
+            let info = '';
+            
+            // 测试backdrop-filter
+            const testDiv = document.createElement('div');
+            testDiv.style.backdropFilter = 'blur(10px)';
+            document.body.appendChild(testDiv);
+            const hasBackdrop = testDiv.style.backdropFilter === 'blur(10px)';
+            document.body.removeChild(testDiv);
+            
+            info += '<strong>backdrop-filter:</strong> ' + (hasBackdrop ? '✅ 支持' : '❌ 不支持（毛玻璃效果可能不显示）') + '<br>';
+            info += '<strong>CSS Grid:</strong> ' + (CSS.supports('display', 'grid') ? '✅ 支持' : '❌ 不支持') + '<br>';
+            info += '<strong>CSS Flexbox:</strong> ' + (CSS.supports('display', 'flex') ? '✅ 支持' : '❌ 不支持') + '<br>';
+            info += '<strong>CSS Variables:</strong> ' + (CSS.supports('--test', '0') ? '✅ 支持' : '❌ 不支持') + '<br>';
+            info += '<strong>CSS Animations:</strong> ' + (CSS.supports('animation', '1s') ? '✅ 支持' : '❌ 不支持') + '<br>';
+            
+            result.className = 'test-result success';
+            result.innerHTML = info;
+        }
+
+        // 页面加载时自动检测
+        window.onload = function() {
+            detectSystem();
+            detectBrowser();
+        };
+    </script>
+</body>
+</html>
